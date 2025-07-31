@@ -25,9 +25,7 @@ class TestAssetCustomConfig:
         value: Dict[str, Any] = read_dataset_yaml(self.filename)
         
         entity_parsed = mapper.to(AssetCustomConfig).map(value.get(key)["schedule"])
-        asset_service: IAssetBuilder = AssetsCustomConfigBuilder(
-                                                entity=entity_parsed,
-                                        )
+        asset_service: IAssetBuilder = AssetsCustomConfigBuilder(entity=entity_parsed)
         result: AssetAll = asset_service.build()
         assert isinstance(result, AssetAll)
         for key, asset in list(result.iter_assets()):

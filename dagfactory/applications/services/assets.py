@@ -13,6 +13,7 @@ from dagfactory.domains import (
     AirflowVersion,
     AssetCustomConfig,
     AssetMetadata,
+    AssetMapper,
 )
 
 
@@ -20,8 +21,7 @@ from dagfactory.domains import (
 class AssetsCustomConfigBuilder(IAssetBuilder):
     entity: AssetCustomConfig
     airflow_version: AirflowVersion = field(default_factory=AirflowVersion)
-    _assets_conditions: str = field(default_factory=str, init=False)
-    _assets_map: Dict[str, Asset] = field(default_factory=dict, init=False)
+    asset_mapper: AssetMapper = field(init=False)
 
     @property
     def file(self) -> str:
@@ -31,45 +31,35 @@ class AssetsCustomConfigBuilder(IAssetBuilder):
     def assets_conditions(self) -> str:
         return " & ".join(self.entity.datasets)
 
-    def _sanitize_conditions(self) -> List[str]:
-        names: Optional[List[str]] = []
-        names.extend(self.extract_dataset_names(self.assets_conditions))
-        names.extend(self.extract_storage_names(self.assets_conditions))
-        return names
-    
-    def __build_map(self, asset_metadata: AssetMetadata):
-        variable_name = asset_metadata.variable_name
-        self._assets_conditions = self._assets_conditions.replace(asset_metadata.uri, variable_name)
-        self._assets_map[variable_name] = asset_metadata.asset
-
-    def _build_map(self, filters: List[str]):
-        raw_map: Dict[str, str] = get_datasets_map_uri_yaml_file(self.file, filters)
-        self._assets_conditions = self.assets_conditions
-        for name, uri in raw_map.items():
-            asset_metadata = AssetMetadata(name=name, uri=uri)
-            self.__build_map(asset_metadata)
-
-    def _fallback(self, filters: List[str]):
-        uris: List[str] = get_datasets_uri_yaml_file(self.file, filters)
-        self._assets_conditions = " & ".join(uris)
-        for uri in uris:
-            asset_metadata = AssetMetadata(uri=uri)
-            self.__build_map(asset_metadata)
-
-    def _evaluate_conditions(self) -> AssetAll:        
+    def _evaluate_conditions(self) -> AssetAll:
         evaluator = SafeEvalVisitor(
-            source=self._assets_conditions,
-            node_map=self._assets_map
+            source=self.asset_mapper.assets_conditions,
+            node_map=self.asset_mapper.assets_map
         )
         evaluated_map = evaluator.evaluate()
-        return AssetAll(evaluated_map)
+        return evaluated_map
+
+    def _build_for_new_version(self, filters: List[str]) -> None:
+        raw_map: Dict[str, str] = get_datasets_map_uri_yaml_file(self.file, filters)
+        for name, uri in raw_map.items():
+            asset_metadata = AssetMetadata(name=name, uri=uri)
+            self.asset_mapper.add_mapping(asset_metadata)
+
+    def _build_for_old_version(self, filters: List[str]) -> None:
+        uris: List[str] = get_datasets_uri_yaml_file(self.file, filters)
+        self.asset_mapper.assets_conditions = " & ".join(uris)
+        for uri in uris:
+            asset_metadata = AssetMetadata(uri=uri)
+            self.asset_mapper.add_mapping(asset_metadata)
 
     def build(self) -> AssetAll:
-        self._assets_map.clear()
-        filters: List[str] = self._sanitize_conditions()
+        self.asset_mapper = AssetMapper(assets_conditions=self.assets_conditions)      
+        filters: List[str] = []
+        filters.extend(self.asset_mapper.extract_dataset_names)
+        filters.extend(self.asset_mapper.extract_storage_names)
         if self.airflow_version.is_at_least("2.9.0"):
-            self._build_map(filters)
+            self._build_for_new_version(filters)
         else:
-            self._fallback(filters)
-        assets:AssetAll = self._evaluate_conditions()
+            self._build_for_old_version(filters)
+        assets: AssetAll = self._evaluate_conditions()
         return assets

@@ -1,0 +1,10 @@
+example_array_alias:
+  description: "Example DAG consumer custom config datasets"
+  catchup: false
+  schedule:
+    file: tests/unit/mocks/datasets/example_config_datasets.yml
+    datasets: ['dataset_custom_1', 'dataset_custom_2']
+  tasks:
+    task_1:
+      operator: airflow.operators.bash.BashOperator
+      bash_command: "echo 'consumer datasets'"

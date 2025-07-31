@@ -27,10 +27,6 @@ class AssetsCustomConfigBuilder(IAssetBuilder):
     def file(self) -> str:
         return self.entity.file
 
-    @property
-    def assets_conditions(self) -> str:
-        return " & ".join(self.entity.datasets)
-
     def _evaluate_conditions(self) -> AssetAll:
         evaluator = SafeEvalVisitor(
             source=self.asset_mapper.assets_conditions,
@@ -53,7 +49,7 @@ class AssetsCustomConfigBuilder(IAssetBuilder):
             self.asset_mapper.add_mapping(asset_metadata)
 
     def build(self) -> AssetAll:
-        self.asset_mapper = AssetMapper(assets_conditions=self.assets_conditions)      
+        self.asset_mapper = AssetMapper(assets_conditions=" & ".join(self.entity.datasets))      
         filters: List[str] = []
         filters.extend(self.asset_mapper.extract_dataset_names)
         filters.extend(self.asset_mapper.extract_storage_names)

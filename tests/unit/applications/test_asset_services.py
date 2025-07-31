@@ -44,6 +44,27 @@ class TestAssetCustomConfig:
         result: AssetAll = asset_service.build()
         assert isinstance(result, AssetAll)
     
+    def test_custom_config_string_conditions(self, read_dataset_yaml):
+        key = "example_string_condition"
+        value: Dict[str, Any] = read_dataset_yaml(self.filename)
+        
+        entity_parsed = mapper.to(AssetCustomConfig).map(value.get(key)["schedule"])
+        asset_service: IAssetBuilder = AssetsCustomConfigBuilder(entity=entity_parsed)
+        result: AssetAny = asset_service.build()
+        assert isinstance(result, AssetAny)
+    
+    def test_custom_config_string_conditions_2_4(self, read_dataset_yaml):
+        key = "example_string_condition"
+        value: Dict[str, Any] = read_dataset_yaml(self.filename)
+        
+        entity_parsed = mapper.to(AssetCustomConfig).map(value.get(key)["schedule"])
+        asset_service: IAssetBuilder = AssetsCustomConfigBuilder(
+                                                entity=entity_parsed,
+                                                airflow_version=self.airflow_2_4
+                                        )
+        result: AssetAll = asset_service.build()
+        assert isinstance(result, AssetAny)
+    
 
 
 

@@ -5,3 +5,5 @@ datasets:
     uri: s3://bucket-cjmm/raw/dataset_custom_2
   - name: dataset_custom_3
     uri: s3://bucket-cjmm/raw/dataset_custom_3
+  - name: raw.dataset_custom_1
+    uri: s3://bucket-cjmm/raw/dataset_custom_1

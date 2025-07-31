@@ -8,3 +8,14 @@ example_array_alias:
     task_1:
       operator: airflow.operators.bash.BashOperator
       bash_command: "echo 'consumer datasets'"
+
+example_string_condition:
+  description: "Example DAG consumer custom config condition datasets"
+  catchup: false
+  schedule:
+    file: tests/unit/mocks/datasets/example_config_datasets.yml
+    datasets: "((raw.dataset_custom_1 & cleaned.dataset_custom_2) | s3://abcd/dataset_custom_3)"
+  tasks:
+    task_1:
+      operator: airflow.operators.bash.BashOperator
+      bash_command: "echo 'consumer datasets'"

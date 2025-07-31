@@ -35,21 +35,27 @@ class AssetsCustomConfigBuilder(IAssetBuilder):
         evaluated_map = evaluator.evaluate()
         return evaluated_map
 
+    def __build_metadata_list(self, assets: List[str]) -> None:
+        for uri in assets:
+            asset_metadata = AssetMetadata(uri=uri)
+            self.asset_mapper.add_mapping(asset_metadata)
+
     def _build_for_new_version(self, filters: List[str]) -> None:
         raw_map: Dict[str, str] = get_datasets_map_uri_yaml_file(self.file, filters)
+        not_in_config_file = list(filter(lambda x: x not in raw_map, filters))
+        self.__build_metadata_list(not_in_config_file)
         for name, uri in raw_map.items():
             asset_metadata = AssetMetadata(name=name, uri=uri)
             self.asset_mapper.add_mapping(asset_metadata)
 
     def _build_for_old_version(self, filters: List[str]) -> None:
-        uris: List[str] = get_datasets_uri_yaml_file(self.file, filters)
-        self.asset_mapper.assets_conditions = " & ".join(uris)
-        for uri in uris:
-            asset_metadata = AssetMetadata(uri=uri)
-            self.asset_mapper.add_mapping(asset_metadata)
+        assets: List[str] = get_datasets_uri_yaml_file(self.file, filters)
+        not_in_config_file = list(filter(lambda x: x not in assets, filters))
+        self.asset_mapper.assets_conditions = self.entity.get_conditions_expression
+        self.__build_metadata_list(assets+not_in_config_file)
 
     def build(self) -> AssetAll:
-        self.asset_mapper = AssetMapper(assets_conditions=" & ".join(self.entity.datasets))      
+        self.asset_mapper = AssetMapper(self.entity.get_conditions_expression)
         filters: List[str] = []
         filters.extend(self.asset_mapper.extract_dataset_names)
         filters.extend(self.asset_mapper.extract_storage_names)

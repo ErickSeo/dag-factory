@@ -5,11 +5,10 @@ from airflow.sdk import Asset, AssetAll, AssetAny
 from packaging.version import Version, parse as parse_version
 
 
-from dagfactory.applications.ports import IAssetBuilder
-from dagfactory.domains.entities import AssetCustomConfig
-from dagfactory.infrastructures import AirflowVersion
-from dagfactory.applications.services import BuildAssetsFromConfig
-from dagfactory.infrastructures import PyparsingExpressionParser
+from dagfactory.assets.ports import IAssetBuilderPort
+from dagfactory.assets.entities import AssetCustomConfigEntity
+from dagfactory.common.infrastructures import AirflowVersion, PyparsingExpressionParser
+from dagfactory.assets.services import BuildAssetsFromConfigService
 
 AssetExpr = Union[str, Dict[str, List["AssetExpr"]]]
 
@@ -31,8 +30,8 @@ class TestAssetCustomConfig:
         key = "example_array_alias"
         value: Dict[str, Any] = read_dataset_yaml(self.filename)
         
-        entity_parsed = mapper.to(AssetCustomConfig).map(value.get(key)["schedule"])
-        asset_service: IAssetBuilder = BuildAssetsFromConfig(entity=entity_parsed)
+        entity_parsed = mapper.to(AssetCustomConfigEntity).map(value.get(key)["schedule"])
+        asset_service: IAssetBuilderPort = BuildAssetsFromConfigService(entity=entity_parsed)
         result: AssetAll = asset_service.build()
         assert isinstance(result, AssetAll)
         for key, asset in list(result.iter_assets()):
@@ -43,8 +42,8 @@ class TestAssetCustomConfig:
         key = "example_string_condition"
         value: Dict[str, Any] = read_dataset_yaml(self.filename)
         
-        entity_parsed = mapper.to(AssetCustomConfig).map(value.get(key)["schedule"])
-        asset_service: IAssetBuilder = BuildAssetsFromConfig(entity=entity_parsed)
+        entity_parsed = mapper.to(AssetCustomConfigEntity).map(value.get(key)["schedule"])
+        asset_service: IAssetBuilderPort = BuildAssetsFromConfigService(entity=entity_parsed)
         result: AssetAny = asset_service.build()
         assert isinstance(result, AssetAny)
 

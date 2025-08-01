@@ -1,31 +1,26 @@
 from dataclasses import dataclass, field
 from airflow.sdk import Asset, AssetAll, AssetAny
 from typing import List, Any, Dict, Union, Tuple
-from dagfactory.domains.ports import (
+
+
+from dagfactory.assets.ports import IAssetBuilderPort
+from dagfactory.assets.entities import AssetCustomConfigEntity
+from dagfactory.assets.infrastructures import parse_asset_schedule
+
+from dagfactory.common.ports import (
     IConfigLoader, 
     IPyparsingExpressionParser,
-    AssetExpr
 )
-
-from dagfactory.utils import (
-    cast_with_type,
-)
-
-from dagfactory.applications.ports import IAssetBuilder
-from dagfactory.infrastructures import (
+from dagfactory.common.infrastructures import (
     PyparsingExpressionParser,
     YamlConfigLoader,
-    parse_asset_schedule,
-)
-from dagfactory.domains.entities import (
-    AssetCustomConfig,
+    cast_with_type
 )
 
-LeafLocation = Tuple[List[AssetExpr], int]
 
 @dataclass
-class BuildAssetsFromConfig(IAssetBuilder):
-    entity: AssetCustomConfig
+class BuildAssetsFromConfigService(IAssetBuilderPort):
+    entity: AssetCustomConfigEntity
     config_loader: IConfigLoader = field(default_factory=YamlConfigLoader, repr=False)
     parser: IPyparsingExpressionParser = field(default_factory=PyparsingExpressionParser, repr=False)
 
@@ -35,7 +30,7 @@ class BuildAssetsFromConfig(IAssetBuilder):
 
     def _build_for_new_version(self, 
                                custom_configs: List[str],
-                               asset_expression: AssetExpr
+                               asset_expression: Dict[str, List[Any]]
     ) -> None:
         config_map = {cfg["name"]: cfg for cfg in custom_configs}
         for leaf, setter in self.parser.traverse_with_setter(asset_expression):
@@ -48,7 +43,7 @@ class BuildAssetsFromConfig(IAssetBuilder):
 
     def build(self)-> Union[AssetAll, AssetAny]:
         custom_configs: Dict[str, Any] = self.config_loader.load(self.file)
-        asset_expression: AssetExpr = self.parser.parse(self.entity.get_conditions_expression)
+        asset_expression: Dict[str, List[Any]] = self.parser.parse(self.entity.get_conditions_expression)
         self._build_for_new_version(
             custom_configs=custom_configs.get(self.entity.key),
             asset_expression=asset_expression

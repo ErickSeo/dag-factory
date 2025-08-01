@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Union
 
 @dataclass
-class AssetCustomConfig:
+class AssetCustomConfigEntity:
     file: str
     datasets: Union[str, List[str]]
     key: str = field(default="datasets")

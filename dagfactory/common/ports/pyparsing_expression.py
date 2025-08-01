@@ -1,15 +1,15 @@
-from typing import Protocol, Generator, Tuple, Dict, List, Union, Callable
+from typing import Protocol, Generator, Tuple, Dict, List, Callable, Any
 
-AssetExpr = Union[str, Dict[str, List["AssetExpr"]]]
+
 LeafSetter = Callable[[str], None]
 
 
 class IPyparsingExpressionParser(Protocol):
-    def parse(self, expression: str) -> AssetExpr: 
+    def parse(self, expression: str) -> Dict[str, List[Any]]: 
         ...
         
     def traverse_with_setter(
         self,
-        tree: AssetExpr
+        tree: Dict[str, List[Any]]
     ) -> Generator[Tuple[str, LeafSetter], None, None]:
         ...

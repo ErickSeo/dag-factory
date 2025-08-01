@@ -1,3 +1,5 @@
+from dagfactory.common.infrastructures.utils.import_tools import import_from_string
+
 def cast_with_type(data):
     """Recursively cast dictionaries with a __type__ key."""
     if isinstance(data, dict):
@@ -18,7 +20,7 @@ def cast_with_type(data):
             args = casted_args
 
         if "__type__" in data:
-            class_type = _import_from_string(data["__type__"])
+            class_type = import_from_string(data["__type__"])
             return class_type(*args, **processed)
 
         return processed

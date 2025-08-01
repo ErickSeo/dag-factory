@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from dagfactory.domains.ports.pyparsing_expression import IPyparsingExpressionParser, AssetExpr, LeafSetter
+from dagfactory.common.ports import IPyparsingExpressionParser, LeafSetter
 from typing import  (
     List, Any, 
     Dict, TypeVar, 
@@ -40,14 +40,14 @@ class PyparsingExpressionParser(IPyparsingExpressionParser):
         key = "and" if op == "&" else "or"
         return {key: [left, right]}
 
-    def parse(self, expr_str: str) -> AssetExpr:
+    def parse(self, expr_str: str) -> Dict[str, List[Any]]:
         try:
             parsed = self._grammar.parseString(expr_str, parseAll=True)[0]
         except ParseException as e:
             raise ValueError(f"Invalid asset expression: {e}") from e
         return self._to_dict(parsed)
 
-    def _to_dict(self, node: Any) -> AssetExpr:
+    def _to_dict(self, node: Any) -> Dict[str, List[Any]]:
         if isinstance(node, dict):
             op, children = next(iter(node.items()))
             return {op: [self._to_dict(child) for child in children]}
@@ -55,11 +55,11 @@ class PyparsingExpressionParser(IPyparsingExpressionParser):
     
     def traverse_with_setter(
             self,
-            tree: AssetExpr
+            tree: Dict[str, List[Any]]
     ) -> Generator[Tuple[str, LeafSetter], None, None]:
         def _rec(
-            node: AssetExpr,
-            parent: List[AssetExpr] = None,
+            node: Dict[str, List[Any]],
+            parent: List[Dict[str, List[Any]]] = None,
             idx: int = None
         ):
             if isinstance(node, dict):

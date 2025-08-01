@@ -830,49 +830,41 @@ class DagBuilder:
         :raises KeyError: If required keys like "schedule" or "datasets" are missing in the parameters.
         :returns: None. The function updates `dag_kwargs` in-place.
         """
-        if INSTALLED_AIRFLOW_VERSION.major < AIRFLOW3_MAJOR_VERSION:
-            is_airflow_version_at_least_2_4 = version.parse(AIRFLOW_VERSION) >= version.parse("2.4.0")
-            is_airflow_version_at_least_2_9 = version.parse(AIRFLOW_VERSION) >= version.parse("2.9.0")
-            has_schedule_attr = utils.check_dict_key(dag_params, "schedule")
-            has_schedule_interval_attr = utils.check_dict_key(dag_params, "schedule_interval")
+        from dagfactory.common.infrastructures import AirflowVersion
 
-            if has_schedule_attr and not has_schedule_interval_attr and is_airflow_version_at_least_2_4:
-                schedule: Dict[str, Any] = dag_params.get("schedule")
+        v = AirflowVersion()
+        
+        schedule: Dict[str, Any] = dag_params.get("schedule_interval") if v.is_less_than("3.0.0") else dag_params.get("schedule")
+        
+        if v.is_less_than("3.0.0"):
+        #if v.is_at_least("2.4.0"):
+            has_file_attr = utils.check_dict_key(schedule, "file")
+            has_datasets_attr = utils.check_dict_key(schedule, "datasets")
 
-                has_file_attr = utils.check_dict_key(schedule, "file")
-                has_datasets_attr = utils.check_dict_key(schedule, "datasets")
-
-                if has_file_attr and has_datasets_attr:
-                    file = schedule.get("file")
-                    datasets: Union[List[str], str] = schedule.get("datasets")
-                    datasets_conditions: str = utils.parse_list_datasets(datasets)
-                    dag_kwargs["schedule"] = DagBuilder.process_file_with_datasets(file, datasets_conditions)
-
-                elif has_datasets_attr and is_airflow_version_at_least_2_9:
-                    datasets = schedule["datasets"]
-                    datasets_conditions: str = utils.parse_list_datasets(datasets)
-                    dag_kwargs["schedule"] = DagBuilder.evaluate_condition_with_datasets(datasets_conditions)
-
-                else:
-                    dag_kwargs["schedule"] = [Dataset(uri) for uri in schedule]
-
+            if has_datasets_attr:
+                datasets: Union[List[str], str] = schedule.get("datasets")
+                datasets_conditions: str = utils.parse_list_datasets(datasets)                
                 if has_file_attr:
-                    schedule.pop("file")
-                if has_datasets_attr:
-                    schedule.pop("datasets")
-        else:
-            schedule = dag_params.get("schedule")
-            if DagBuilder._is_asset(schedule):
-                dag_kwargs["schedule"] = DagBuilder._asset_schedule(schedule)
-            else:
-                if (
-                    utils.check_dict_key(dag_params, "schedule")
-                    and isinstance(dag_params["schedule"], str)
-                    and dag_params["schedule"].strip().lower() == "none"
-                ):
-                    dag_kwargs["schedule"] = None
+                    file = schedule.get("file")
+                    schedule = DagBuilder.process_file_with_datasets(file, datasets_conditions)
+                elif v.is_at_least("2.9.0"):
+                    schedule = DagBuilder.evaluate_condition_with_datasets(datasets_conditions)
                 else:
-                    dag_kwargs["schedule"] = schedule
+                    schedule = [Dataset(uri) for uri in schedule]
+
+        if DagBuilder._is_asset(schedule):
+            dag_kwargs["schedule"] = DagBuilder._asset_schedule(schedule)
+        else:
+            # * * * *
+            # ['dataset1', 'dataset2']
+            if (
+                utils.check_dict_key(dag_params, "schedule")
+                and isinstance(dag_params["schedule"], str)
+                and dag_params["schedule"].strip().lower() == "none"
+            ):
+                dag_kwargs["schedule"] = None
+            else:
+                dag_kwargs["schedule"] = schedule
 
     @staticmethod
     def _normalise_tasks_config(tasks_cfg: Any) -> Dict[str, Dict[str, Any]]:

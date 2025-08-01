@@ -1,10 +1,9 @@
-# dagfactory/infrastructures/configs/yaml_config_loader.py
 from pathlib import Path
 from typing import Mapping, Any
 import yaml, os
 
-from dagfactory.domains.ports import IConfigLoader
-from dagfactory.infrastructures.serializers.dynamic_cast import cast_with_type
+from dagfactory.common.ports import IConfigLoader
+from dagfactory.common.infrastructures.serializers.dynamic_cast import cast_with_type
 
 def _join(loader: yaml.FullLoader, node: yaml.Node) -> str:
     return "".join(str(i) for i in loader.construct_sequence(node))

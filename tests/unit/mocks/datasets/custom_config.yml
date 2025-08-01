@@ -14,6 +14,7 @@ example_string_condition:
   catchup: false
   schedule:
     file: tests/unit/mocks/datasets/example_config_datasets.yml
+    asset_type: "airflow.sdk.Asset"
     datasets: "((raw.dataset_custom_1 & cleaned.dataset_custom_2) | s3://abcd/dataset_custom_3)"
   tasks:
     task_1:

@@ -1,7 +1,4 @@
-from dagfactory.applications.services.assets import (
-    AssetsCustomConfigBuilder
-)
-
+from dagfactory.applications.services.build_assets_from_config import BuildAssetsFromConfig
 __ALL__ = [
-    AssetsCustomConfigBuilder,
+    BuildAssetsFromConfig,
 ]

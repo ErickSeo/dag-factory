@@ -1,4 +1,4 @@
-from dagfactory.applications.ports.assets import IAssetBuilder
+from dagfactory.applications.ports.build_assets import IAssetBuilder
 
 __ALL__ = [
     IAssetBuilder,

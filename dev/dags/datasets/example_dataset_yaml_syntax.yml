@@ -8,9 +8,9 @@ consumer_dag:
     datasets:
       !or
         - !and
-          - "s3://bucket-cjmm/raw/dataset_custom_1"
+          - "raw.dataset_custom_1"
           - "s3://bucket-cjmm/raw/dataset_custom_2"
-        - "s3://bucket-cjmm/raw/dataset_custom_3"
+        - "s3://bucket-cjmm/raw/dataset_custom_3.yaml"
   tasks:
     task_1:
       operator: airflow.operators.bash.BashOperator

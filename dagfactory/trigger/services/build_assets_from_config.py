@@ -3,9 +3,9 @@ from airflow.sdk import Asset, AssetAll, AssetAny
 from typing import List, Any, Dict, Union, Tuple
 
 
-from dagfactory.assets.ports import IAssetBuilderPort
-from dagfactory.assets.entities import AssetCustomConfigEntity
-from dagfactory.assets.infrastructures import parse_asset_schedule
+from dagfactory.trigger.ports import ITriggerBuilderPort
+from dagfactory.trigger.entities import AssetCustomConfigEntity
+from dagfactory.trigger.infrastructures import parse_asset_schedule
 
 from dagfactory.common.ports import (
     IConfigLoader, 
@@ -19,7 +19,7 @@ from dagfactory.common.infrastructures import (
 
 
 @dataclass
-class BuildAssetsFromConfigService(IAssetBuilderPort):
+class BuildAssetsFromConfigService(ITriggerBuilderPort):
     entity: AssetCustomConfigEntity
     config_loader: IConfigLoader = field(default_factory=YamlConfigLoader, repr=False)
     parser: IPyparsingExpressionParser = field(default_factory=PyparsingExpressionParser, repr=False)

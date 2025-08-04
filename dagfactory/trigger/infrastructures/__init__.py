@@ -1,4 +1,4 @@
-from dagfactory.assets.infrastructures.assets import (
+from dagfactory.trigger.infrastructures.assets import (
     combine_assets,
     contains_asset,
     parse_asset_schedule,
